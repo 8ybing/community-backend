@@ -1,5 +1,4 @@
 # community-backend
-一款基于Spring Boot+Vue的前后端分离项目，这里是后端的代码。所用技术:MyBatisPlus/JWT/ElementUI/BULMA/
 
 #### 完成部分：
 
