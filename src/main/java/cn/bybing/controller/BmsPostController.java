@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
+import java.util.List;
 import java.util.Map;
 
 import static cn.bybing.jwt.JwtUtil.*;
@@ -58,16 +59,16 @@ public class BmsPostController extends BaseController{
 
     /**
      * 发表新帖子
-     * @param Authorization
+     * @param userName
      * @param dto
      * @return
      */
     @PostMapping("/create")
-    public ApiResult<BmsPost> create(@RequestHeader(value = HEADER_STRING) String Authorization, @RequestBody CreateTopicDTO dto){
-        JwtParser jwtParser = Jwts.parser();
-        Jws<Claims> claimsJws = jwtParser.setSigningKey(SECRET).parseClaimsJws(Authorization.replace(TOKEN_PREFIX,""));
-        Claims claims = claimsJws.getBody();
-        String userName = (String) claims.get("userName");
+    public ApiResult<BmsPost> create(@RequestHeader(value = USER_NAME) String userName, @RequestBody CreateTopicDTO dto){
+//        JwtParser jwtParser = Jwts.parser();
+//        Jws<Claims> claimsJws = jwtParser.setSigningKey(SECRET).parseClaimsJws(Authorization.replace(TOKEN_PREFIX,""));
+//        Claims claims = claimsJws.getBody();
+//        String userName = (String) claims.get("userName");
         UmsUser user = umsUserService.getUserByUsername(userName);
         BmsPost topic = postService.create(dto,user);
         return ApiResult.success(topic);
@@ -82,6 +83,17 @@ public class BmsPostController extends BaseController{
     public ApiResult<Map<String,Object>> view(@RequestParam("id") String id){
         Map<String, Object> map = postService.viewTopic(id);
         return ApiResult.success(map);
+    }
+
+    /**
+     * 获取详情页推荐文章(”随便看看“板块)
+     * @param id
+     * @return
+     */
+    @GetMapping("/recommend")
+    public ApiResult<List<BmsPost>> getRecommend(@RequestParam("topicId") String id){
+        List<BmsPost> recommend = postService.getRecommend(id);
+        return ApiResult.success(recommend);
     }
 
 }

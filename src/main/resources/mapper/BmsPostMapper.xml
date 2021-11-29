@@ -40,6 +40,7 @@
         </if>
     </select>
 
+
     <select id="selectRecommend" resultType="cn.bybing.model.entity.BmsPost">
         select *
         from bms_post t
