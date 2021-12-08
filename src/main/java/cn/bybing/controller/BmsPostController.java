@@ -8,14 +8,19 @@ import cn.bybing.model.vo.PostVO;
 import cn.bybing.service.IBmsPostService;
 import cn.bybing.service.IUmsUserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.vdurmont.emoji.Emoji;
+import com.vdurmont.emoji.EmojiParser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -32,12 +37,10 @@ import static cn.bybing.jwt.JwtUtil.*;
 @RequestMapping("/post")
 public class BmsPostController extends BaseController{
 
-    @Resource
-    private IBmsPostService bmsPostService;
 
     @Resource
     private IUmsUserService umsUserService;
-    
+
     @Resource
     private IBmsPostService postService;
 
@@ -53,7 +56,7 @@ public class BmsPostController extends BaseController{
                                         @RequestParam(value = "pageNo",defaultValue = "1")Integer pageNo,
                                         @RequestParam(value = "size",defaultValue = "10")Integer pageSize){
 
-        Page<PostVO> list = bmsPostService.getList(new Page<>(pageNo,pageSize),tab);
+        Page<PostVO> list = postService.getList(new Page<>(pageNo,pageSize),tab);
         return ApiResult.success(list);
     }
 
@@ -94,6 +97,34 @@ public class BmsPostController extends BaseController{
     public ApiResult<List<BmsPost>> getRecommend(@RequestParam("topicId") String id){
         List<BmsPost> recommend = postService.getRecommend(id);
         return ApiResult.success(recommend);
+    }
+
+    /**
+     * 更新帖子
+     * @param userName
+     * @param post
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult<BmsPost> updateTopic(@RequestHeader(value = USER_NAME)String userName,
+                                          @RequestBody @Valid BmsPost post){
+        UmsUser user = umsUserService.getUserByUsername(userName);
+        Assert.isTrue(user.getId().equals(post.getUserId()),"没有操作权限！");
+        post.setModifyTime(new Date());
+        post.setContent(EmojiParser.parseToAliases(post.getContent()));
+        postService.updateById(post);
+        return ApiResult.success(post,"更新成功！");
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ApiResult<String> delete(@RequestHeader(value = USER_NAME)String userName,
+                                    @RequestBody @PathVariable("id")String id){
+        UmsUser user = umsUserService.getUserByUsername(userName);
+        BmsPost post = postService.getById(id);
+        Assert.notNull(post,"帖子不存在！");
+        Assert.isTrue(user.getId().equals(post.getUserId()),"没有操作权限！");
+        postService.removeById(post);
+        return ApiResult.success(null,"删除成功！");
     }
 
 }

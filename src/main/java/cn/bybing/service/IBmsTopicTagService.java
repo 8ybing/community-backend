@@ -31,7 +31,7 @@ public interface IBmsTopicTagService extends IService<BmsTopicTag> {
      */
     void createTopicTag(String id, List<BmsTag> tags);
     /**
-     * 获取标签换脸话题ID集合
+     * 获取标签关联帖子ID集合
      *
      * @param id
      * @return

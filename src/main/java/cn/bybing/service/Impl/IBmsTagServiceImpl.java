@@ -3,14 +3,18 @@ package cn.bybing.service.Impl;
 import cn.bybing.mapper.BmsTagMapper;
 import cn.bybing.model.entity.BmsPost;
 import cn.bybing.model.entity.BmsTag;
+import cn.bybing.service.IBmsPostService;
 import cn.bybing.service.IBmsTagService;
+import cn.bybing.service.IBmsTopicTagService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +25,13 @@ import java.util.List;
  */
 @Service
 public class IBmsTagServiceImpl extends ServiceImpl<BmsTagMapper, BmsTag> implements IBmsTagService {
+
+
+    @Resource
+    private IBmsTopicTagService bmsTopicTagService;
+
+    @Resource
+    private IBmsPostService bmsPostService;
 
     /**
      *
@@ -46,6 +57,10 @@ public class IBmsTagServiceImpl extends ServiceImpl<BmsTagMapper, BmsTag> implem
 
     @Override
     public Page<BmsPost> selectTopicsByTagId(Page<BmsPost> topicPage, String id) {
-        return null;
+        //获取标签关联的帖子id集合
+        Set<String> idsByTagId = bmsTopicTagService.selectTopicIdsByTagId(id);
+        LambdaQueryWrapper<BmsPost> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(BmsPost::getId,idsByTagId);
+        return bmsPostService.page(topicPage,wrapper);
     }
 }
