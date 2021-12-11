@@ -3,10 +3,15 @@ package cn.bybing.controller;
 import cn.bybing.api.ApiResult;
 import cn.bybing.model.dto.LoginDTO;
 import cn.bybing.model.dto.RegisterDTO;
+import cn.bybing.model.entity.BmsPost;
 import cn.bybing.model.entity.UmsUser;
+import cn.bybing.service.IBmsPostService;
 import cn.bybing.service.IUmsUserService;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.PageUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtParser;
@@ -36,6 +41,14 @@ public class UmsUserController extends BaseController{
     @Resource
     private IUmsUserService umsUserService;
 
+    @Resource
+    private IBmsPostService postService;
+
+    /**
+     * 注册
+     * @param dto
+     * @return
+     */
     @RequestMapping(value = "/register",method = RequestMethod.POST)
     public ApiResult<Map<String,Object>> register(@Valid @RequestBody RegisterDTO dto){
         UmsUser user = umsUserService.executeRegister(dto);
@@ -47,6 +60,11 @@ public class UmsUserController extends BaseController{
         return ApiResult.success(map);
     }
 
+    /**
+     * 登录
+     * @param dto
+     * @return
+     */
     @RequestMapping(value = "/login",method = RequestMethod.POST)
     public ApiResult<Map<String,String>> login(@Valid @RequestBody LoginDTO dto){
         String token = umsUserService.executeLogin(dto);
@@ -58,6 +76,11 @@ public class UmsUserController extends BaseController{
         return ApiResult.success(map,"登录成功");
     }
 
+    /**
+     * 通过username获取用户信息
+     * @param userName
+     * @return
+     */
     @GetMapping(value = "/info")
     public ApiResult<UmsUser> getUser(@RequestHeader(value = USER_NAME) String userName){
 //        JwtParser jwtParser = Jwts.parser();
@@ -69,6 +92,24 @@ public class UmsUserController extends BaseController{
         return ApiResult.success(user);
     }
 
+    @GetMapping("/{username}")
+    public ApiResult<Map<String,Object>> getUserInfoAndTopicsByUsername(@PathVariable(value = "username")String username,
+                                                                        @RequestParam(value = "pageNum",defaultValue = "1")Integer pageNum,
+                                                                        @RequestParam(value = "pageSize",defaultValue = "5")Integer pageSize){
+        HashMap<String, Object> map = new HashMap<>();
+        UmsUser user = umsUserService.getUserByUsername(username);
+        Assert.notNull(user,"此用户不存在");
+        Page<BmsPost> page = postService.page(new Page<>(pageNum, pageSize),
+                new LambdaQueryWrapper<BmsPost>().eq(BmsPost::getUserId, user.getId()));
+        map.put("user",user);
+        map.put("topics",page);
+        return ApiResult.success(map);
+    }
+
+    /**
+     * 注销
+     * @return
+     */
     @RequestMapping(value = "/logout",method = RequestMethod.GET)
     public ApiResult<Object> logout(){
         return ApiResult.success(null,"注销成功");

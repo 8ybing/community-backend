@@ -116,6 +116,12 @@ public class BmsPostController extends BaseController{
         return ApiResult.success(post,"更新成功！");
     }
 
+    /**
+     * 删除帖子
+     * @param userName
+     * @param id
+     * @return
+     */
     @DeleteMapping("/delete/{id}")
     public ApiResult<String> delete(@RequestHeader(value = USER_NAME)String userName,
                                     @RequestBody @PathVariable("id")String id){
@@ -124,6 +130,10 @@ public class BmsPostController extends BaseController{
         Assert.notNull(post,"帖子不存在！");
         Assert.isTrue(user.getId().equals(post.getUserId()),"没有操作权限！");
         postService.removeById(post);
+
+        //文章数减少
+        int newCount = user.getTopicCount() - 1;
+        umsUserService.updateById(user.setTopicCount(newCount));
         return ApiResult.success(null,"删除成功！");
     }
 
