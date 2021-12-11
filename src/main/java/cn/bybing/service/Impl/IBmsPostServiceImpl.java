@@ -135,6 +135,16 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper,BmsPost> imp
 
     @Override
     public Page<PostVO> searchByKey(String keyword, Page<PostVO> page) {
-        return null;
+        //根据关键字查询帖子
+        Page<PostVO> postVOPage = this.baseMapper.searchByKey(page, keyword);
+        postVOPage.getRecords().forEach(topic -> {
+            List<BmsTopicTag> topicTags = topicTagService.selectByTopicId(topic.getId());
+            if(!topicTags.isEmpty()){
+                List<String> tagIds = topicTags.stream().map(BmsTopicTag::getTagId).collect(Collectors.toList());
+                List<BmsTag> tags = bmsTagMapper.selectBatchIds(tagIds);
+                topic.setTags(tags);
+            }
+        });
+        return postVOPage;
     }
 }
