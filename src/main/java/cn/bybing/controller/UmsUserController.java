@@ -106,6 +106,12 @@ public class UmsUserController extends BaseController{
         return ApiResult.success(map);
     }
 
+    @PostMapping("/update")
+    public ApiResult<UmsUser> updateUserInfo(@RequestParam UmsUser user){
+        umsUserService.updateById(user);
+        return ApiResult.success(user);
+    }
+
     /**
      * 注销
      * @return
