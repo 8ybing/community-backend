@@ -107,9 +107,12 @@ public class UmsUserController extends BaseController{
     }
 
     @PostMapping("/update")
-    public ApiResult<UmsUser> updateUserInfo(@RequestParam UmsUser user){
-        umsUserService.updateById(user);
-        return ApiResult.success(user);
+    public ApiResult<UmsUser> updateUserInfo(@RequestHeader(value = USER_NAME)String userName,
+                                             @RequestBody UmsUser umsuser){
+        UmsUser user = umsUserService.getUserByUsername(userName);
+        Assert.isTrue(user.getId().equals(umsuser.getId()),"没有操作权限！");
+        umsUserService.updateById(umsuser);
+        return ApiResult.success(umsuser);
     }
 
     /**
