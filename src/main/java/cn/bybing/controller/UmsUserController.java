@@ -7,6 +7,7 @@ import cn.bybing.model.entity.BmsPost;
 import cn.bybing.model.entity.UmsUser;
 import cn.bybing.service.IBmsPostService;
 import cn.bybing.service.IUmsUserService;
+import cn.bybing.utils.MD5Utils;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.PageUtil;
@@ -106,6 +107,12 @@ public class UmsUserController extends BaseController{
         return ApiResult.success(map);
     }
 
+    /**
+     * 修改个人资料
+     * @param userName
+     * @param umsuser
+     * @return
+     */
     @PostMapping("/update")
     public ApiResult<UmsUser> updateUserInfo(@RequestHeader(value = USER_NAME)String userName,
                                              @RequestBody UmsUser umsuser){
@@ -113,6 +120,29 @@ public class UmsUserController extends BaseController{
         Assert.isTrue(user.getId().equals(umsuser.getId()),"没有操作权限！");
         umsUserService.updateById(umsuser);
         return ApiResult.success(umsuser);
+    }
+
+    /**
+     * 修改密码
+     * @param userId
+     * @param oldPass
+     * @param newPass
+     * @return
+     */
+    @PostMapping("/updatepass")
+    public ApiResult<Object> updateUserInfo(@RequestParam("id")String userId,
+                                             @RequestParam("oldPass")String oldPass,
+                                             @RequestParam("newPass")String newPass){
+        String encodePass = MD5Utils.getPwd(oldPass);
+        UmsUser user = umsUserService.getUserById(userId);
+        Assert.isTrue(user.getId().equals(userId),"没有操作权限！");
+        if(!encodePass.equals(user.getPassword())){
+            return ApiResult.failed("原密码错误！");
+        }
+        UmsUser umsUser = umsUserService.getOne(new LambdaQueryWrapper<UmsUser>().eq(UmsUser::getId,userId));
+        umsUser.setPassword(MD5Utils.getPwd(newPass));
+        umsUserService.updateById(umsUser);
+        return ApiResult.success("修改成功！");
     }
 
     /**
