@@ -29,7 +29,7 @@
         <where>
             <if test="tab == 'hot'">
                 date(t.create_time) &lt;= date_add(curdate(), interval 1 day)
-                and date(t.create_time) &gt;= date_sub(curdate(), interval 7 day)
+                and date(t.create_time) &gt;= date_sub(curdate(), interval 365 day)
             </if>
         </where>
         <if test="tab != 'hot'">
@@ -72,6 +72,14 @@
                 or t.title like CONCAT('${keyword}','%')
                 or t.title like CONCAT('%','${keyword}','%')
                 or t.title = #{keyword}
+                or u.username like CONCAT('%','${keyword}')
+                or u.username like CONCAT('${keyword}','%')
+                or u.username like CONCAT('%','${keyword}','%')
+                or u.username = #{keyword}
+                or u.alias like CONCAT('%','${keyword}')
+                or u.alias like CONCAT('${keyword}','%')
+                or u.alias like CONCAT('%','${keyword}','%')
+                or u.alias = #{keyword}
             </if>
         </where>
         order by t.view desc, t.create_time desc

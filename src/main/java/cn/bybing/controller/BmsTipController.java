@@ -6,6 +6,7 @@ import cn.bybing.service.IBmsTipService;
 import cn.bybing.utils.MyPropsUtils;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,13 +45,19 @@ public class BmsTipController extends BaseController {
         String DailyTip = "";
         Date date = new Date();
         map.put("time",date);
+        Object content = null;
+        Object from = null;
         try {
-            DailyTip = HttpUtil.get(propsUtils.getUrl() + "/api/yiyan");
+            DailyTip = HttpUtil.get(propsUtils.getUrl());
+            JSONObject tips = JSON.parseObject(DailyTip);
+            content = tips.get("hitokoto");
+            from = tips.get("from");
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("第三方接口异常");
         }
-        map.put("content",DailyTip);
+        map.put("content",content);
+        map.put("from",from);
         return ApiResult.success(map);
     }
 }

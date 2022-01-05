@@ -11,6 +11,13 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: baibing123
+  servlet:
+    multipart:
+      enabled: true
+
+file:
+  upload:
+    dir: upload
 
 tipsapi:
-  url: https://api.dzzui.com
+  url: https://v1.hitokoto.cn/

@@ -18,7 +18,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Date;
@@ -38,21 +40,28 @@ public class IUmsUserServiceImpl extends ServiceImpl<UmsUserMapper, UmsUser> imp
     @Override
     public UmsUser executeRegister(RegisterDTO dto) {
         //查询是否有相同用户名的用户
-        LambdaQueryWrapper<UmsUser> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(UmsUser::getUsername, dto.getUsername()).or().eq(UmsUser::getEmail,dto.getEmail());
-        UmsUser umsUser = baseMapper.selectOne(wrapper);
-        if(!ObjectUtils.isEmpty(umsUser)){
-            ApiResult.failed("账号或邮箱已经存在!");
+        UmsUser addUser = null;
+        try {
+            LambdaQueryWrapper<UmsUser> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(UmsUser::getUsername, dto.getUsername()).or().eq(UmsUser::getEmail,dto.getEmail());
+            UmsUser umsUser = baseMapper.selectOne(wrapper);
+            if(!ObjectUtils.isEmpty(umsUser)){
+                throw new Exception("账号或邮箱已存在！");
+            }
+            addUser = UmsUser.builder()
+                    .username(dto.getUsername())
+                    .alias(dto.getUsername())
+                    .password(MD5Utils.getPwd(dto.getPass()))
+                    .email(dto.getEmail())
+                    .createTime(new Date())
+                    .status(true)
+                    .build();
+            baseMapper.insert(addUser);
+        } catch (Exception e) {
+            log.warn("账号或邮箱已存在！");
         }
-        UmsUser addUser = UmsUser.builder()
-                .username(dto.getUsername())
-                .alias(dto.getUsername())
-                .password(MD5Utils.getPwd(dto.getPass()))
-                .email(dto.getEmail())
-                .createTime(new Date())
-                .status(true)
-                .build();
-        baseMapper.insert(addUser);
+//        Assert.isNull(umsUser,"账号或邮箱已经存在");
+
         return addUser;
     }
 

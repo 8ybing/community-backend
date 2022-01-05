@@ -8,23 +8,35 @@ import cn.bybing.model.entity.UmsUser;
 import cn.bybing.service.IBmsPostService;
 import cn.bybing.service.IUmsUserService;
 import cn.bybing.utils.MD5Utils;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.PageUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
 import org.omg.CORBA.PUBLIC_MEMBER;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static cn.bybing.jwt.JwtUtil.*;
 
@@ -36,6 +48,7 @@ import static cn.bybing.jwt.JwtUtil.*;
  * @Description:
  */
 @RestController
+@Slf4j
 @RequestMapping("/ums/user")
 public class UmsUserController extends BaseController{
 
@@ -52,6 +65,12 @@ public class UmsUserController extends BaseController{
      */
     @RequestMapping(value = "/register",method = RequestMethod.POST)
     public ApiResult<Map<String,Object>> register(@Valid @RequestBody RegisterDTO dto){
+        LambdaQueryWrapper<UmsUser> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(UmsUser::getUsername,dto.getUsername()).or().eq(UmsUser::getEmail,dto.getEmail());
+        UmsUser one = umsUserService.getOne(wrapper);
+        if(!ObjectUtils.isEmpty(one)){
+            return ApiResult.failed("账号或邮箱已存在！");
+        }
         UmsUser user = umsUserService.executeRegister(dto);
         if(ObjectUtils.isEmpty(user)){
             return ApiResult.failed("账号注册失败");
@@ -143,6 +162,37 @@ public class UmsUserController extends BaseController{
         umsUser.setPassword(MD5Utils.getPwd(newPass));
         umsUserService.updateById(umsUser);
         return ApiResult.success("修改成功！");
+    }
+
+    /**
+     * 头像上传
+     * @return
+     */
+    @PostMapping("/updateImage")
+    public Object updateImage(@RequestParam("image") MultipartFile file,@RequestParam("id")String userId)throws Exception{
+        if(file.isEmpty()){
+            throw new Exception("文件为空！");
+        }
+        HashMap<String, Object> paramMap = new HashMap<>();
+        Object res = null;
+        //获得上传文件名称
+        String fileName = file.getOriginalFilename();
+        String suffixName = fileName.substring(fileName.lastIndexOf("."));
+        log.info("上传文件名为：{}，后缀名为：{}",fileName,suffixName);
+        String path = "D:/CodeZone/vue_study/community/community-backend/src/main/resources/static/upload";//文件存储位置
+        File dest = new File(path + "/" + fileName);
+        if (!dest.getParentFile().exists()) {
+            dest.getParentFile().mkdirs();
+        }
+        try {
+            file.transferTo(dest);
+            paramMap.put("image",dest);
+            res = HttpUtil.post("http://pic.bybing.cn/api/upload",paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("上传图片异常！");
+        }
+        return res;
     }
 
     /**
